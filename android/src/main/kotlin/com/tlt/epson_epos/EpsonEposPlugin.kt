@@ -335,6 +335,7 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
           )
           mPrinter!!.sendData(Printer.PARAM_DEFAULT)
           Log.d(logTag, "Printed $target $series")
+          mPrinter!!.clearCommandBuffer()
         } catch (ex: Epos2Exception) {
           ex.printStackTrace()
           Log.e(logTag, "sendData Error" + ex.errorStatus, ex)

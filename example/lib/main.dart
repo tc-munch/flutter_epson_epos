@@ -56,8 +56,8 @@ class _MyAppState extends State<MyApp> {
                       subtitle: Text('${printer.address}'),
                       trailing: TextButton(
                           onPressed: () {
-                            onSetPrinterSetting(printer);
-                            // onPrintTest(printer);
+                            //onSetPrinterSetting(printer);
+                            onPrintTest(printer);
                           },
                           child: Text('Print Test')),
                     );

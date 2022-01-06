@@ -40,35 +40,39 @@ class _MyAppState extends State<MyApp> {
         body: SafeArea(
             child: Padding(
           padding: const EdgeInsets.all(24.0),
-          child: Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextButton(onPressed: onDiscoveryTCP, child: Text('Discovery TCP')),
-                Flexible(
-                    child: ListView.builder(
-                  itemBuilder: (BuildContext context, int index) {
-                    final printer = printers[index];
-                    return ListTile(
-                      contentPadding: EdgeInsets.all(0),
-                      title: Text('${printer.model} | ${printer.series}'),
-                      subtitle: Text('${printer.address}'),
-                      trailing: TextButton(
-                          onPressed: () {
-                            //onSetPrinterSetting(printer);
-                            onPrintTest(printer);
-                          },
-                          child: Text('Print Test')),
-                    );
-                  },
-                  itemCount: printers.length,
-                  primary: false,
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                ))
-              ],
-            ),
+          child: Column(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextButton(onPressed: onDiscoveryTCP, child: Text('Discovery TCP')),
+                    Flexible(
+                        child: ListView.builder(
+                      itemBuilder: (BuildContext context, int index) {
+                        final printer = printers[index];
+                        return ListTile(
+                          contentPadding: EdgeInsets.all(0),
+                          title: Text('${printer.model} | ${printer.series}'),
+                          subtitle: Text('${printer.address}'),
+                          trailing: TextButton(
+                              onPressed: () {
+                                //onSetPrinterSetting(printer);
+                                onPrintTest(printer);
+                              },
+                              child: Text('Print Test')),
+                        );
+                      },
+                      itemCount: printers.length,
+                      primary: false,
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                    ))
+                  ],
+                ),
+              ),
+            ],
           ),
         )),
       ),

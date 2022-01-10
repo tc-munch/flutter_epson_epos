@@ -483,6 +483,11 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         "addLineSpace" -> {
           mPrinter!!.addFeedLine(commandValue as Int)
         }
+        "addTextSize" -> {
+          var width: Int = command["width"] as Int
+          var height: Int = command["height"] as Int
+          mPrinter!!.addTextSize(width, height)
+        }
         "addTextAlign" -> {
           when (commandValue.toString()) {
             "LEFT" -> {

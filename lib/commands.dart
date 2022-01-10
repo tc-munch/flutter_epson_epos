@@ -26,6 +26,10 @@ class EpsonEPOSCommand {
     return {"id": "addCut", "value": cutData};
   }
 
+  Map<String, dynamic> addTextSize(int width, int height) {
+    return {"id": "addTextSize", "width": width, "height": height};
+  }
+
   Map<String, dynamic> addTextAlign(EpsonEPOSTextAlign data) {
     final cutData = _enumText(data);
     return {"id": "addTextAlign", "value": cutData};

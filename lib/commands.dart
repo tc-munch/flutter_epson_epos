@@ -44,4 +44,24 @@ class EpsonEPOSCommand {
 
     return cmd;
   }
+
+  Map<String, dynamic> addTextFont(EpsonEPOSFont font) {
+    return {"id": "addTextFont", "value": font.index};
+  }
+
+  Map<String, dynamic> addTextStyle(bool reverse, bool underline, bool bold, ) {
+    return {"id": "addTextStyle", "value": 0, "reverse": reverse, "underline": underline, "bold": bold};
+  }
+
+  Map<String, dynamic> addPageLine() {
+    return {"id": "addPageLine", "value": 0};
+  }
+
+  Map<String, dynamic> addPageRectangle() {
+    return {"id": "addPageRectangle", "value": 0};
+  }
+
+  Map<String, dynamic> addBarcode(String data, EpsonEPOSBarcodeType type, EpsonEPOSHRI hri, EpsonEPOSFont font, int width, int height) {
+    return {"id": "addBarcode", "value": data, "type": type.index, "hri": hri.index, "font": font.index, "width": width, "height": height};
+  }
 }

@@ -58,6 +58,7 @@ class _MyAppState extends State<MyApp> {
                           subtitle: Text('${printer.address}'),
                           trailing: TextButton(
                               onPressed: () {
+                                //onGetPrinterSetting(printer);
                                 //onSetPrinterSetting(printer);
                                 onPrintTest(printer);
                               },
@@ -97,6 +98,15 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  void onGetPrinterSetting(EpsonPrinterModel printer) async {
+    try {
+      await EpsonEPOS.getPaperWidth(printer);
+      await EpsonEPOS.getPrinterSetting(printer);
+    } catch (e) {
+      log("Error: " + e.toString());
+    }
+  }
+
   void onSetPrinterSetting(EpsonPrinterModel printer) async {
     try {
       await EpsonEPOS.setPrinterSetting(printer, paperWidth: 80);
@@ -109,9 +119,19 @@ class _MyAppState extends State<MyApp> {
     EpsonEPOSCommand command = EpsonEPOSCommand();
     List<Map<String, dynamic>> commands = [];
     commands.add(command.addTextAlign(EpsonEPOSTextAlign.LEFT));
-    commands.add(command.addFeedLine(4));
-    commands.add(command.append('EPSON ePOS Testing'));
-    commands.add(command.addFeedLine(4));
+    commands.add(command.addFeedLine(2));
+    commands.add(command.addTextStyle(false, true, true));
+    commands.add(command.append('EPSON ePOS Testing\n'));
+    commands.add(command.addTextFont(EpsonEPOSFont.FONT_B));
+    commands.add(command.addTextStyle(true, false, false));
+    commands.add(command.append('FONT B\n'));
+    commands.add(command.addPageLine());
+    commands.add(command.addPageRectangle());
+
+    commands.add(command.addBarcode("01209457", EpsonEPOSBarcodeType.BARCODE_CODE39, EpsonEPOSHRI.HRI_BELOW, EpsonEPOSFont.FONT_A, 2, 100));
+    //commands.add(command.appendBitmap(data, width, height, posX, posY))
+
+    commands.add(command.addFeedLine(2));
     commands.add(command.addCut(EpsonEPOSCut.CUT_FEED));
     await EpsonEPOS.onPrint(printer, commands);
   }

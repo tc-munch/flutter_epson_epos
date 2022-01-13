@@ -47,6 +47,11 @@ class EpsonEPOS {
     return await _channel.invokeMethod('onPrint', params);
   }
 
+  static Future<dynamic> getPaperWidth(EpsonPrinterModel printer) async {
+    final Map<String, dynamic> params = {"address": printer.address, "type": printer.type, "series": printer.series};
+    return await _channel.invokeMethod('getPaperWidth', params);
+  }
+
   static Future<dynamic> getPrinterSetting(EpsonPrinterModel printer) async {
     final Map<String, dynamic> params = {"address": printer.address, "type": printer.type, "series": printer.series};
     return await _channel.invokeMethod('getPrinterSetting', params);

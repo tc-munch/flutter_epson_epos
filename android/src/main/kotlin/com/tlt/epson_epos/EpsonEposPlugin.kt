@@ -29,6 +29,7 @@ import io.flutter.plugin.common.MethodChannel.Result
 import java.lang.Exception
 import kotlin.collections.ArrayList
 import android.util.Base64
+import com.epson.epos2.Epos2CallbackCode
 
 import java.lang.StringBuilder
 
@@ -132,6 +133,9 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         "isPrinterConnected" -> {
           isPrinterConnected(call, result)
         }
+        "getPaperWidth" -> {
+          getPaperWidth(call, result)
+        }
         "getPrinterSetting" -> {
           getPrinterSetting(call, result)
         }
@@ -225,6 +229,38 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     Log.d(logTag, "isPrinterConnected $call $result")
   }
 
+  private fun getPaperWidth(@NonNull call: MethodCall, @NonNull result: Result) {
+    Log.i(logTag, "getPaperWidth $call $result")
+    val address: String = call.argument<String>("address") as String
+    val type: String = call.argument<String>("type") as String
+    val series: String = call.argument<String>("series") as String
+    var target = "${type}:${address}"
+    var resp = EpsonEposPrinterResult("onPrint${type}", false)
+    try {
+      if (!connectPrinter(target, series)) {
+        resp.success = false
+        resp.message = printerStatusError()//"Can not connect to the printer."
+        result.success(resp.toJSON())
+        mPrinter!!.clearCommandBuffer()
+      } else {
+        if (mPrinter != null) {
+          //mPrinter!!.clearCommandBuffer()
+
+          mPrinter!!.getPrinterSetting(
+            Printer.PARAM_DEFAULT,
+            Printer.SETTING_PAPERWIDTH,
+            mPrinterSettingListener
+          )
+        }
+      }
+    } catch (e: Exception) {
+      e.printStackTrace()
+      resp.success = false
+      resp.message = "Print error"
+      result.success(resp.toJSON())
+    }
+  }
+
   private fun getPrinterSetting(@NonNull call: MethodCall, @NonNull result: Result) {
     Log.d(logTag, "getPrinterSetting $call $result")
     val address: String = call.argument<String>("address") as String
@@ -241,6 +277,12 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       } else {
         if (mPrinter != null) {
           mPrinter!!.clearCommandBuffer()
+
+          mPrinter!!.getPrinterSetting(
+            Printer.PARAM_DEFAULT,
+            Printer.SETTING_PAPERWIDTH,
+            mPrinterSettingListener
+          )
         }
       }
     } catch (e: Exception) {
@@ -248,6 +290,8 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       resp.success = false
       resp.message = "Print error"
       result.success(resp.toJSON())
+    } finally {
+        disconnectPrinter()
     }
   }
 
@@ -257,9 +301,9 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     val type: String = call.argument<String>("type") as String
     val series: String = call.argument<String>("series") as String
 
-    val paperWidth: Int? = call.argument<String>("paper_width") as? Int
-    val printDensity: Int? = call.argument<String>("print_density") as? Int
-    val printSpeed: Int? = call.argument<String>("print_speed") as? Int
+    val paperWidth: Int = call.argument<Int>("paper_width") as Int ?: Printer.PARAM_DEFAULT
+    val printDensity: Int = call.argument<Int>("print_density") as Int ?: Printer.PARAM_DEFAULT
+    val printSpeed: Int = call.argument<Int>("print_speed") as Int ?: Printer.PARAM_DEFAULT
 
     var target = "${type}:${address}"
     var resp = EpsonEposPrinterResult("onPrint${type}", false)
@@ -271,8 +315,8 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         mPrinter!!.clearCommandBuffer()
       } else {
         val settingList = HashMap<Int, Int>()
-        settingList[Printer.SETTING_PRINTSPEED] = printSpeed ?: Printer.PARAM_DEFAULT
-        settingList[Printer.SETTING_PRINTDENSITY] = printDensity ?: Printer.PARAM_DEFAULT
+        settingList[Printer.SETTING_PRINTSPEED] = printSpeed
+        settingList[Printer.SETTING_PRINTDENSITY] = printDensity
         var pw = 80
         if (paperWidth != null) {
           pw = if (paperWidth != 80 || paperWidth != 58 || paperWidth != 60) {
@@ -354,7 +398,7 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
   private val mDiscoveryListener = DiscoveryListener { deviceInfo ->
     Log.d(logTag, "Found: ${deviceInfo?.deviceName}")
-    if (deviceInfo?.deviceName != null && deviceInfo?.deviceName != "") {
+    if (deviceInfo?.deviceName != null && deviceInfo.deviceName != "") {
       var printer = EpsonEposPrinterInfo(deviceInfo.ipAddress, deviceInfo.deviceName)
       var printerIndex = printers.indexOfFirst { e -> e.address == deviceInfo.ipAddress }
       if (printerIndex > -1) {
@@ -363,16 +407,26 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         printers.add(printer)
       }
     }
-
   }
 
   private val mPrinterSettingListener = object : PrinterSettingListener {
-    override fun onGetPrinterSetting(p0: Int, p1: Int, p2: Int) {
-      Log.e("logTag", "onGetPrinterSetting type: $p0 $p1 $p2")
+    override fun onGetPrinterSetting(code: Int, type: Int, value: Int) {
+      println("onGetPrinterSetting: code=$code, type=$type, value=$value")
+
+      if (Epos2CallbackCode.CODE_SUCCESS == code) {
+        var paperWidth: Int = when (value) {
+          Printer.SETTING_PAPERWIDTH_58_0 -> 58
+          Printer.SETTING_PAPERWIDTH_60_0 -> 60
+          Printer.SETTING_PAPERWIDTH_80_0 -> 80
+          else -> 0
+        }
+
+        println("paper width: $paperWidth mm")
+      }
     }
 
-    override fun onSetPrinterSetting(p0: Int) {
-      Log.e("logTag", "onSetPrinterSetting Code: $p0")
+    override fun onSetPrinterSetting(code: Int) {
+      println("onSetPrinterSetting: code=$code")
     }
   }
 
@@ -429,6 +483,23 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       var commandValue = command["value"]
 
       when (commandId) {
+        "addTextFont" -> {
+          mPrinter!!.addTextFont(commandValue as Int)
+        }
+        "addTextStyle" -> {
+          var reverse: Boolean = command["reverse"] as Boolean
+          var underline: Boolean = command["underline"] as Boolean
+          var bold: Boolean = command["bold"] as Boolean
+          //var colour: Int = command["colour"] as Int
+          var colour: Int = Printer.PARAM_DEFAULT
+          mPrinter!!.addTextStyle(reverse.epsonBool(), underline.epsonBool(), bold.epsonBool(), colour)
+        }
+        "addPageLine" -> {
+          mPrinter!!.addPageLine(0, 0, 300, 2, Printer.LINE_THIN)
+        }
+        "addPageRectangle" -> {
+          mPrinter!!.addPageRectangle(0, 0, 300, 20, Printer.LINE_MEDIUM)
+        }
 
         "appendText" -> {
           Log.d(logTag, "appendText: $commandValue")
@@ -460,6 +531,15 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
           } catch (e: Exception) {
             Log.e(logTag, "onGenerateCommand Error" + e.localizedMessage)
           }
+        }
+        "addBarcode" -> {
+          var type: Int = command["type"] as Int
+          var hri: Int = command["hri"] as Int
+          var font: Int = command["font"] as Int
+          var width: Int = command["width"] as Int
+          var height: Int = command["height"] as Int
+
+          mPrinter!!.addBarcode(commandValue as String, type, hri, font, width, height)
         }
         "addFeedLine" -> {
           mPrinter!!.addFeedLine(commandValue as Int)
@@ -661,6 +741,13 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
     return errorMes
   }
+}
 
-
+fun Boolean?.epsonBool(): Int {
+  return when (this) {
+    true -> Printer.TRUE
+    false -> Printer.FALSE
+    null -> Printer.PARAM_UNSPECIFIED
+    else -> Printer.PARAM_DEFAULT
+  }
 }

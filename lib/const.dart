@@ -47,7 +47,7 @@ final List<EPSONSeries> epsonSeries = [
     "TM-T88V",
     "TM-T88VI",
     "TM-T88V-i",
-    "TM-T88VI- iHUB",
+    "TM-T88VI-iHUB",
     "TM-T88V-DT",
     "TM-T88VI-DT2"
   ]),

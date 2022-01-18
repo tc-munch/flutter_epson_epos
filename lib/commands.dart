@@ -30,6 +30,12 @@ class EpsonEPOSCommand {
     return {"id": "addTextSize", "width": width, "height": height};
   }
 
+  /// Use this API at the "beginning of a line." If this API is used elsewhere, it will be ignored.
+  ///
+  /// Setting of this API is also applied to the barcode/2D symbol/raster image/NV logo.
+  ///
+  /// When specifying alignment in the page mode, use addPagePosition instead of this API.
+  ///
   Map<String, dynamic> addTextAlign(EpsonEPOSTextAlign data) {
     final cutData = _enumText(data);
     return {"id": "addTextAlign", "value": cutData};

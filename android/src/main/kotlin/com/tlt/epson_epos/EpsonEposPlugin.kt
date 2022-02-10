@@ -246,11 +246,27 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         if (mPrinter != null) {
           //mPrinter!!.clearCommandBuffer()
 
-          mPrinter!!.getPrinterSetting(
-            Printer.PARAM_DEFAULT,
-            Printer.SETTING_PAPERWIDTH,
-            mPrinterSettingListener
-          )
+          mPrinter?.queryPrinterSetting(Printer.PARAM_DEFAULT, Printer.SETTING_PAPERWIDTH) { code, type, value ->
+            if (Epos2CallbackCode.CODE_SUCCESS == code) {
+              val paperWidth: Int = when (value) {
+                Printer.SETTING_PAPERWIDTH_58_0 -> 58
+                Printer.SETTING_PAPERWIDTH_60_0 -> 60
+                Printer.SETTING_PAPERWIDTH_80_0 -> 80
+                else -> 0
+              }
+
+              println("paper width: $paperWidth mm")
+
+              resp.success = true
+              resp.message = "Successfully!"
+              resp.content = paperWidth
+              result.success(resp.toJSON())
+            } else {
+              resp.success = false
+              resp.message = "OnGetPrinterSetting error"
+              result.success(resp.toJSON())
+            }
+          }
         }
       }
     } catch (e: Exception) {
@@ -278,11 +294,11 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         if (mPrinter != null) {
           mPrinter!!.clearCommandBuffer()
 
-          mPrinter!!.getPrinterSetting(
+          mPrinter?.queryPrinterSetting(
             Printer.PARAM_DEFAULT,
-            Printer.SETTING_PAPERWIDTH,
-            mPrinterSettingListener
-          )
+            Printer.SETTING_PAPERWIDTH) { code, type, value ->
+            // TODO:
+          }
         }
       }
     } catch (e: Exception) {
@@ -327,7 +343,7 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
         settingList[Printer.SETTING_PAPERWIDTH] = pw
         try {
-          mPrinter!!.setPrinterSetting(Printer.PARAM_DEFAULT, settingList, mPrinterSettingListener)
+          //mPrinter!!.setPrinterSetting(Printer.PARAM_DEFAULT, settingList, mPrinterSettingListener)
         } catch (ex: Exception) {
           Log.e(logTag, "sendData Error", ex)
           ex.printStackTrace()
@@ -406,27 +422,6 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
       } else {
         printers.add(printer)
       }
-    }
-  }
-
-  private val mPrinterSettingListener = object : PrinterSettingListener {
-    override fun onGetPrinterSetting(code: Int, type: Int, value: Int) {
-      println("onGetPrinterSetting: code=$code, type=$type, value=$value")
-
-      if (Epos2CallbackCode.CODE_SUCCESS == code) {
-        var paperWidth: Int = when (value) {
-          Printer.SETTING_PAPERWIDTH_58_0 -> 58
-          Printer.SETTING_PAPERWIDTH_60_0 -> 60
-          Printer.SETTING_PAPERWIDTH_80_0 -> 80
-          else -> 0
-        }
-
-        println("paper width: $paperWidth mm")
-      }
-    }
-
-    override fun onSetPrinterSetting(code: Int) {
-      println("onSetPrinterSetting: code=$code")
     }
   }
 
@@ -741,6 +736,27 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
     return errorMes
   }
+}
+
+private class OnGetPrinterSetting(val settings: (code: Int, type: Int, value: Int) -> Unit) {
+  val listener = object : PrinterSettingListener {
+    override fun onGetPrinterSetting(code: Int, type: Int, value: Int) {
+      println("onGetPrinterSetting: code=$code, type=$type, value=$value")
+      settings(code, type, value)
+    }
+
+    override fun onSetPrinterSetting(code: Int) {
+      println("onSetPrinterSetting: code=$code")
+    }
+  }
+}
+
+/**
+ * Modern Kotlin based wrapper for getPrinterSetting and  PrinterSettingListener
+ */
+fun Printer.queryPrinterSetting(timeout: Int, type: Int, settings: (code: Int, type: Int, value: Int) -> Unit) {
+  val sl = OnGetPrinterSetting(settings)
+  this.getPrinterSetting(timeout, type, sl.listener)
 }
 
 fun Boolean?.epsonBool(): Int {

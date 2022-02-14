@@ -291,11 +291,11 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         if (mPrinter != null) {
           mPrinter!!.clearCommandBuffer()
 
-          mPrinter?.queryPrinterSetting(
-            Printer.PARAM_DEFAULT,
-            Printer.SETTING_PAPERWIDTH) { code, type, value ->
-            // TODO:
-          }
+//          mPrinter?.queryPrinterSetting(
+//            Printer.PARAM_DEFAULT,
+//            Printer.SETTING_PAPERWIDTH) { code, type, value ->
+//            // TODO:
+//          }
         }
       }
     } catch (e: Exception) {
@@ -756,7 +756,7 @@ fun Printer.queryPrinterSetting(timeout: Int, type: Int, settings: (code: Int, t
   this.getPrinterSetting(timeout, type, sl.listener)
 }
 
-fun Boolean?.epsonBool(): Int {
+fun Boolean.epsonBool(): Int {
   return when (this) {
     true -> Printer.TRUE
     false -> Printer.FALSE

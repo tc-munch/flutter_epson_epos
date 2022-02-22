@@ -244,8 +244,7 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         mPrinter!!.clearCommandBuffer()
       } else {
         if (mPrinter != null) {
-          //mPrinter!!.clearCommandBuffer()
-
+          mPrinter?.clearCommandBuffer()
           mPrinter?.queryPrinterSetting(Printer.PARAM_DEFAULT, Printer.SETTING_PAPERWIDTH) { code, type, value ->
             if (Epos2CallbackCode.CODE_SUCCESS == code) {
               val paperWidth: Int = when (value) {
@@ -254,8 +253,6 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 Printer.SETTING_PAPERWIDTH_80_0 -> 80
                 else -> 0
               }
-
-              println("paper width: $paperWidth mm")
 
               resp.success = true
               resp.message = "Successfully!"
@@ -294,11 +291,11 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         if (mPrinter != null) {
           mPrinter!!.clearCommandBuffer()
 
-          mPrinter?.queryPrinterSetting(
-            Printer.PARAM_DEFAULT,
-            Printer.SETTING_PAPERWIDTH) { code, type, value ->
-            // TODO:
-          }
+//          mPrinter?.queryPrinterSetting(
+//            Printer.PARAM_DEFAULT,
+//            Printer.SETTING_PAPERWIDTH) { code, type, value ->
+//            // TODO:
+//          }
         }
       }
     } catch (e: Exception) {
@@ -741,12 +738,12 @@ class EpsonEposPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 private class OnGetPrinterSetting(val settings: (code: Int, type: Int, value: Int) -> Unit) {
   val listener = object : PrinterSettingListener {
     override fun onGetPrinterSetting(code: Int, type: Int, value: Int) {
-      println("onGetPrinterSetting: code=$code, type=$type, value=$value")
+      //println("onGetPrinterSetting: code=$code, type=$type, value=$value")
       settings(code, type, value)
     }
 
     override fun onSetPrinterSetting(code: Int) {
-      println("onSetPrinterSetting: code=$code")
+      //println("onSetPrinterSetting: code=$code")
     }
   }
 }
@@ -759,7 +756,7 @@ fun Printer.queryPrinterSetting(timeout: Int, type: Int, settings: (code: Int, t
   this.getPrinterSetting(timeout, type, sl.listener)
 }
 
-fun Boolean?.epsonBool(): Int {
+fun Boolean.epsonBool(): Int {
   return when (this) {
     true -> Printer.TRUE
     false -> Printer.FALSE
